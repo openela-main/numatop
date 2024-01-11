@@ -1,0 +1,172 @@
+From ffd83b3a7749b3601eec305b8b8f9f44c3f3fe80 Mon Sep 17 00:00:00 2001
+From: Zhengjun Xing <zhengjun.xing@linux.intel.com>
+Date: Fri, 10 Jun 2022 16:19:24 +0800
+Subject: [PATCH] Initial support for SPR
+
+SPR has more CPUs, so it requires the system with its max open files should
+bigger than 1024. In many systems, the default max open files are 1024, the
+ error can be " Fail to setup perf":
+
+ # ulimit -n
+   1024        <------the max open files are 1024
+ # ./numatop
+   NumaTOP is starting ...
+   Fail to setup perf (probably permission denied)!
+
+Need enlarge the max open files:
+
+ # ulimit -n 8192
+ # ulimit -n
+   8192        <------now the max open files are 8192
+
+Signed-off-by: Zhengjun Xing <zhengjun.xing@linux.intel.com>
+---
+ intel/include/skl.h   |  4 ++++
+ intel/include/types.h |  5 +++--
+ intel/plat.c          | 13 ++++++++++---
+ intel/skl.c           | 26 ++++++++++++++++++++++++++
+ 4 files changed, 43 insertions(+), 5 deletions(-)
+
+diff --git a/intel/include/skl.h b/intel/include/skl.h
+index 67c8939..7a8b8f2 100644
+--- a/intel/include/skl.h
++++ b/intel/include/skl.h
+@@ -47,6 +47,10 @@ extern void icx_profiling_config(perf_count_id_t, struct _plat_event_config *);
+ extern void icx_ll_config(struct _plat_event_config *);
+ extern int icx_offcore_num(void);
+ 
++extern void spr_profiling_config(perf_count_id_t, struct _plat_event_config *);
++extern void spr_ll_config(struct _plat_event_config *);
++extern int spr_offcore_num(void);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/intel/include/types.h b/intel/include/types.h
+index 85aa074..76c7ad3 100644
+--- a/intel/include/types.h
++++ b/intel/include/types.h
+@@ -45,10 +45,11 @@ typedef enum {
+ 	CPU_HSX,
+ 	CPU_BDX,
+ 	CPU_SKX,
+-	CPU_ICX
++	CPU_ICX,
++	CPU_SPR
+ } cpu_type_t;
+ 
+-#define	CPU_TYPE_NUM	11
++#define	CPU_TYPE_NUM	12
+ 
+ typedef enum {
+ 	PERF_COUNT_INVALID = -1,
+diff --git a/intel/plat.c b/intel/plat.c
+index fed4f1e..abf3766 100644
+--- a/intel/plat.c
++++ b/intel/plat.c
+@@ -49,7 +49,8 @@ s_plat_profiling_config[CPU_TYPE_NUM] = {
+ 	snbep_profiling_config,
+ 	bdw_profiling_config,
+ 	skl_profiling_config,
+-	icx_profiling_config
++	icx_profiling_config,
++	spr_profiling_config
+ };
+ 
+ pfn_plat_ll_config_t
+@@ -64,7 +65,8 @@ s_plat_ll_config[CPU_TYPE_NUM] = {
+ 	snbep_ll_config,
+ 	bdw_ll_config,
+ 	skl_ll_config,
+-	icx_ll_config
++	icx_ll_config,
++	spr_ll_config
+ };
+ 
+ pfn_plat_offcore_num_t
+@@ -79,7 +81,8 @@ s_plat_offcore_num[CPU_TYPE_NUM] = {
+ 	snb_offcore_num,
+ 	bdw_offcore_num,
+ 	skl_offcore_num,
+-	icx_offcore_num
++	icx_offcore_num,
++	spr_offcore_num
+ };
+ 
+ /* ARGSUSED */
+@@ -171,6 +174,9 @@ cpu_type_get(void)
+ 		case 106:
+ 			type = CPU_ICX;
+ 			break;
++		case 143:
++                        type = CPU_SPR;
++			break;
+ 		}
+ 	}
+ 
+@@ -210,6 +216,7 @@ plat_detect(void)
+ 		/* fall through */
+ 	case CPU_SKX:
+ 	case CPU_ICX:
++	case CPU_SPR:
+ 		ret = 0;
+ 		s_cpu_type = cpu_type;
+ 		break;
+diff --git a/intel/skl.c b/intel/skl.c
+index 9e30574..ace0833 100644
+--- a/intel/skl.c
++++ b/intel/skl.c
+@@ -55,6 +55,14 @@ static plat_event_config_t s_icx_config[PERF_COUNT_NUM] = {
+ 	{ PERF_TYPE_RAW, 0x01BB, 0x53, 0x104000001, "off_core_response_1" }
+ };
+ 
++static plat_event_config_t s_spr_config[PERF_COUNT_NUM] = {
++	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0x53, 0, "cpu_clk_unhalted.core" },
++	{ PERF_TYPE_RAW, 0x012A, 0x53, 0x730000001, "off_core_response_0" },
++	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_REF_CPU_CYCLES, 0x53, 0, "cpu_clk_unhalted.ref" },
++	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, 0x53, 0, "instr_retired.any" },
++	{ PERF_TYPE_RAW, 0x012B, 0x53, 0x104000001, "off_core_response_1" }
++};
++
+ static plat_event_config_t s_skl_ll = {
+ 	PERF_TYPE_RAW, 0x01CD, 0x53, LL_THRESH, "mem_trans_retired.latency_above_threshold"
+ };
+@@ -71,6 +79,12 @@ icx_profiling_config(perf_count_id_t perf_count_id, plat_event_config_t *cfg)
+ 	plat_config_get(perf_count_id, cfg, s_icx_config);
+ }
+ 
++void
++spr_profiling_config(perf_count_id_t perf_count_id, plat_event_config_t *cfg)
++{
++	plat_config_get(perf_count_id, cfg, s_spr_config);
++}
++
+ void
+ skl_ll_config(plat_event_config_t *cfg)
+ {
+@@ -83,6 +97,12 @@ icx_ll_config(plat_event_config_t *cfg)
+ 	skl_ll_config(cfg);
+ }
+ 
++void
++spr_ll_config(plat_event_config_t *cfg)
++{
++	skl_ll_config(cfg);
++}
++
+ int
+ skl_offcore_num(void)
+ {
+@@ -94,3 +114,9 @@ icx_offcore_num(void)
+ {
+ 	return skl_offcore_num();
+ }
++
++int
++spr_offcore_num(void)
++{
++	return skl_offcore_num();
++}
+-- 
+2.31.1
+
