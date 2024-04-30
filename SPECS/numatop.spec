@@ -2,8 +2,8 @@
 %undefine _ld_as_needed
 
 Name:           numatop
-Version:        2.2
-Release:        4%{?dist}
+Version:        2.4
+Release:        1%{?dist}
 Summary:        Memory access locality characterization and analysis
 
 License:        BSD
@@ -23,7 +23,8 @@ BuildRequires:  numactl-devel
 # This only works for Intel and Power CPUs
 ExclusiveArch:  x86_64 ppc64le
 
-Patch001: v2.2-001-Initial-support-for-SPR.patch
+#Patch001: v2.2-001-Initial-support-for-SPR.patch
+
 
 %description
 NumaTOP is an observation tool for runtime memory locality characterization and
@@ -61,6 +62,12 @@ autoreconf --force --install --symlink
 
 
 %changelog
+* Thu Feb  1 2024 Pingfan Liu <piliu@redhat.com> - 2.4.1
+- Add initial support for EMR
+
+* Fri Dec  8 2023 Pingfan Liu <piliu@redhat.com> - 2.3.3
+- Add Power10 support
+
 * Mon Aug 09 2021 Mohan Boddu <mboddu@redhat.com> - 2.1-7
 - Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
   Related: rhbz#1991688
