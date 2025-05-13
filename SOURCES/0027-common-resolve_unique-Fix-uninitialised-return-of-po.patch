@@ -1,0 +1,32 @@
+From 3095e829f785fefe8618bfd12652eb1ed173f29a Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Tue, 6 Aug 2024 14:39:39 +0100
+Subject: [PATCH 27/32] common: resolve_unique: Fix uninitialised return of
+ pointer item
+
+In the case where resolve_unique does not resolve a unique symbol
+the uninitialzed pointer item is returned which is problematic because
+the caller performs a NULL check on this. Fix this be initializing
+item to NULL at the start.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/os/sym.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/os/sym.c b/common/os/sym.c
+index 4626c8d..ffd40fc 100644
+--- a/common/os/sym.c
++++ b/common/os/sym.c
+@@ -842,7 +842,7 @@ sym_resolve(sym_t *sym, uint64_t addr, sym_item_t **item_arr,
+ static sym_item_t *
+ resolve_unique(sym_t *sym, uint64_t addr, sym_item_t **arr, uint64_t *base_addr)
+ {
+-	sym_item_t *item_arr, *item;
++	sym_item_t *item_arr, *item = NULL;
+ 	int num, i;
+ 
+ 	if (sym_resolve(sym, addr, &item_arr, &num, base_addr) != 0) {
+-- 
+2.41.0
+

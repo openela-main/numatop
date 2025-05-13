@@ -1,0 +1,126 @@
+From 4d9a0e4cd945c58163c0655904f46f932338c9b9 Mon Sep 17 00:00:00 2001
+From: Dapeng Mi <dapeng1.mi@linux.intel.com>
+Date: Tue, 15 Oct 2024 12:29:57 +0000
+Subject: [PATCH 1/3] Remove EMR specific events configuration
+
+Emerald Rapids shares same perf events configuration with
+Sapphire rapids, it's unnecessary to define duplicated events
+configuration and helper for EMR. It's fine to directly use SPR's
+configuration.
+
+Thus delete these duplicated EMR code.
+
+Signed-off-by: Dapeng Mi <dapeng1.mi@linux.intel.com>
+---
+ x86/include/skl.h |  4 ----
+ x86/plat.c        |  6 +++---
+ x86/skl.c         | 28 +---------------------------
+ 3 files changed, 4 insertions(+), 34 deletions(-)
+
+diff --git a/x86/include/skl.h b/x86/include/skl.h
+index ab19f58..7a8b8f2 100644
+--- a/x86/include/skl.h
++++ b/x86/include/skl.h
+@@ -51,10 +51,6 @@ extern void spr_profiling_config(perf_count_id_t, struct _plat_event_config *);
+ extern void spr_ll_config(struct _plat_event_config *);
+ extern int spr_offcore_num(void);
+ 
+-extern void emr_profiling_config(perf_count_id_t, struct _plat_event_config *);
+-extern void emr_ll_config(struct _plat_event_config *);
+-extern int emr_offcore_num(void);
+-
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/x86/plat.c b/x86/plat.c
+index d0c7cba..d69544e 100644
+--- a/x86/plat.c
++++ b/x86/plat.c
+@@ -52,7 +52,7 @@ s_plat_profiling_config[CPU_TYPE_NUM] = {
+ 	skl_profiling_config,
+ 	icx_profiling_config,
+ 	spr_profiling_config,
+-	emr_profiling_config,
++	spr_profiling_config,	/* EMR */
+ 	zen_profiling_config,
+ 	zen3_profiling_config,
+ 	zen4_profiling_config
+@@ -72,7 +72,7 @@ s_plat_ll_config[CPU_TYPE_NUM] = {
+ 	skl_ll_config,
+ 	icx_ll_config,
+ 	spr_ll_config,
+-	emr_ll_config,
++	spr_ll_config,		/* EMR */
+ 	zen_ll_config,
+ 	zen_ll_config,
+ 	zen_ll_config
+@@ -92,7 +92,7 @@ s_plat_offcore_num[CPU_TYPE_NUM] = {
+ 	skl_offcore_num,
+ 	icx_offcore_num,
+ 	spr_offcore_num,
+-	emr_offcore_num,
++	spr_offcore_num,	/* EMR */
+ 	zen_offcore_num,
+ 	zen_offcore_num,
+ 	zen_offcore_num
+diff --git a/x86/skl.c b/x86/skl.c
+index a80a868..9be1bf0 100644
+--- a/x86/skl.c
++++ b/x86/skl.c
+@@ -63,14 +63,6 @@ static plat_event_config_t s_spr_config[PERF_COUNT_NUM] = {
+ 	{ PERF_TYPE_RAW, 0x012B, 0x53, 0x104000001, 0, 0, "off_core_response_1" }
+ };
+ 
+-static plat_event_config_t s_emr_config[PERF_COUNT_NUM] = {
+-	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0x53, 0, 0, 0, "cpu_clk_unhalted.core" },
+-	{ PERF_TYPE_RAW, 0x012A, 0x53, 0x730000001, 0, 0, "off_core_response_0" },
+-	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_REF_CPU_CYCLES, 0x53, 0, 0, 0, "cpu_clk_unhalted.ref" },
+-	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, 0x53, 0, 0, 0, "instr_retired.any" },
+-	{ PERF_TYPE_RAW, 0x012B, 0x53, 0x104000001, 0, 0, "off_core_response_1" }
+-};
+-
+ static plat_event_config_t s_skl_ll = {
+ 	PERF_TYPE_RAW, 0x01CD, 0x53, LL_THRESH, 0, 1, "mem_trans_retired.latency_above_threshold"
+ };
+@@ -93,12 +85,6 @@ spr_profiling_config(perf_count_id_t perf_count_id, plat_event_config_t *cfg)
+ 	plat_config_get(perf_count_id, cfg, s_spr_config);
+ }
+ 
+-void
+-emr_profiling_config(perf_count_id_t perf_count_id, plat_event_config_t *cfg)
+-{
+-	plat_config_get(perf_count_id, cfg, s_emr_config);
+-}
+-
+ void
+ skl_ll_config(plat_event_config_t *cfg)
+ {
+@@ -117,12 +103,6 @@ spr_ll_config(plat_event_config_t *cfg)
+ 	skl_ll_config(cfg);
+ }
+ 
+-void
+-emr_ll_config(plat_event_config_t *cfg)
+-{
+-	skl_ll_config(cfg);
+-}
+-
+ int
+ skl_offcore_num(void)
+ {
+@@ -139,10 +119,4 @@ int
+ spr_offcore_num(void)
+ {
+ 	return skl_offcore_num();
+-}
+-
+-int
+-emr_offcore_num(void)
+-{
+-	return skl_offcore_num();
+-}
++}
+\ No newline at end of file
+-- 
+2.41.0
+

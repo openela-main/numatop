@@ -1,0 +1,31 @@
+From 5a9c64daa4e146f5b03af5fc9201461a701d208a Mon Sep 17 00:00:00 2001
+From: Sandipan Das <sandipan.das@amd.com>
+Date: Mon, 3 Jun 2024 13:35:10 +0530
+Subject: [PATCH 04/32] x86/zen: Add Zen 5 and later support
+
+Processors based on Zen 5 and future microarchitectures are expected to
+support events that are already available on Zen 4. Since these events
+already provide base functionality, keep reusing the Zen 4 CPU model for
+Family 1Ah and later processors until any changes are required.
+
+Signed-off-by: Sandipan Das <sandipan.das@amd.com>
+---
+ x86/plat.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/x86/plat.c b/x86/plat.c
+index b5dbda4..d0c7cba 100644
+--- a/x86/plat.c
++++ b/x86/plat.c
+@@ -210,6 +210,8 @@ cpu_type_get(void)
+ 		} else {
+ 			type = CPU_ZEN4;
+ 		}
++	} else if (family >= 26) {	/* Family 1Ah and later */
++		type = CPU_ZEN4;
+ 	}
+ 
+ 	return (type);
+-- 
+2.41.0
+

@@ -1,0 +1,76 @@
+From 0df5ed7dd09816495596c7b5224b4747713d3766 Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.king@intel.com>
+Date: Wed, 7 Aug 2024 08:55:50 +0100
+Subject: [PATCH 29/32] common: use mount/umount system calls rather than using
+ commands
+
+Using the mount and umount commands is slower and less safe than
+directly using the mount and umount system calls. Fix this by replacing
+the exec'ing of the commands with direct system calls.
+
+Fixes: https://github.com/intel/numatop/issues/60
+
+Signed-off-by: Colin Ian King <colin.king@intel.com>
+---
+ common/os/os_util.c | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
+
+diff --git a/common/os/os_util.c b/common/os/os_util.c
+index 3e4d5fc..a2212fb 100644
+--- a/common/os/os_util.c
++++ b/common/os/os_util.c
+@@ -42,6 +42,7 @@
+ #include <locale.h>
+ #include <math.h>
+ #include <sys/wait.h>
++#include <sys/mount.h>
+ #include "../include/types.h"
+ #include "../include/util.h"
+ #include "../include/os/os_util.h"
+@@ -731,33 +732,34 @@ static boolean_t resctrl_mounted(void)
+ 
+ boolean_t os_cmt_init(void)
+ {
+-	char command[128];
++	int ret;
+ 
+ 	g_pqos_moni_id = 0;
+ 
+ 	if (resctrl_mounted())
+ 		return B_TRUE;
+ 
+-	snprintf(command, sizeof(command),
+-		"mount -t resctrl resctrl /sys/fs/resctrl 2>/dev/null");
+-
+-	if (!execute_command(command, "r"))
++	ret = mount("resctrl", "/sys/fs/resctrl", "resctrl", 0, NULL);
++	if (ret < 0) {
++		debug_print(NULL, 2, "Mount of /sys/fs/resctrl failed (errno = %d)\n", errno);
+ 		return B_FALSE;
++	}
+ 
+ 	return resctrl_mounted();
+ }
+ 
+ void os_cmt_fini(void)
+ {
+-	char command[128];
++	int ret;
+ 
+ 	if (!resctrl_mounted())
+ 		return;
+ 
+-	snprintf(command, sizeof(command),
+-		"umount -f /sys/fs/resctrl 2>/dev/null");
++	ret = umount("/sys/fs/resctrl");
++	if (ret < 0) {
++		debug_print(NULL, 2, "Unmount of /sys/fs/resctrl failed (errno = %d)\n", errno);
++	}
+ 
+-	execute_command(command, "r");
+ 	g_pqos_moni_id = 0;
+ }
+ 
+-- 
+2.41.0
+

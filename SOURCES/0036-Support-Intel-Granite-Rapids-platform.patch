@@ -1,0 +1,83 @@
+From f1dadf9fbd33457b660884c6ce526315b1647e72 Mon Sep 17 00:00:00 2001
+From: Dapeng Mi <dapeng1.mi@linux.intel.com>
+Date: Tue, 15 Oct 2024 12:41:10 +0000
+Subject: [PATCH 2/3] Support Intel Granite Rapids platform
+
+Granite Rapids shares same perf events configuration with
+Sapphire rapids, directly reuse SPR's configuration to enable GNR's
+support.
+
+Signed-off-by: Dapeng Mi <dapeng1.mi@linux.intel.com>
+---
+ x86/include/types.h | 3 ++-
+ x86/plat.c          | 7 +++++++
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/x86/include/types.h b/x86/include/types.h
+index 1a0199a..814ef1c 100644
+--- a/x86/include/types.h
++++ b/x86/include/types.h
+@@ -48,12 +48,13 @@ typedef enum {
+ 	CPU_ICX,
+ 	CPU_SPR,
+ 	CPU_EMR,
++	CPU_GNR,
+ 	CPU_ZEN,
+ 	CPU_ZEN3,
+ 	CPU_ZEN4
+ } cpu_type_t;
+ 
+-#define	CPU_TYPE_NUM	16
++#define	CPU_TYPE_NUM	17
+ 
+ typedef enum {
+ 	PERF_COUNT_INVALID = -1,
+diff --git a/x86/plat.c b/x86/plat.c
+index d69544e..0eea408 100644
+--- a/x86/plat.c
++++ b/x86/plat.c
+@@ -53,6 +53,7 @@ s_plat_profiling_config[CPU_TYPE_NUM] = {
+ 	icx_profiling_config,
+ 	spr_profiling_config,
+ 	spr_profiling_config,	/* EMR */
++	spr_profiling_config,	/* GNR */
+ 	zen_profiling_config,
+ 	zen3_profiling_config,
+ 	zen4_profiling_config
+@@ -73,6 +74,7 @@ s_plat_ll_config[CPU_TYPE_NUM] = {
+ 	icx_ll_config,
+ 	spr_ll_config,
+ 	spr_ll_config,		/* EMR */
++	spr_ll_config,		/* GNR */
+ 	zen_ll_config,
+ 	zen_ll_config,
+ 	zen_ll_config
+@@ -93,6 +95,7 @@ s_plat_offcore_num[CPU_TYPE_NUM] = {
+ 	icx_offcore_num,
+ 	spr_offcore_num,
+ 	spr_offcore_num,	/* EMR */
++	spr_offcore_num,	/* GNR */
+ 	zen_offcore_num,
+ 	zen_offcore_num,
+ 	zen_offcore_num
+@@ -199,6 +202,9 @@ cpu_type_get(void)
+ 		case 207:
+                         type = CPU_EMR;
+ 			break;
++		case 173:
++			type = CPU_GNR;
++			break;
+ 		}
+ 	} else if (family == 23) {	/* Family 17h */
+ 		type = CPU_ZEN;
+@@ -252,6 +258,7 @@ plat_detect(void)
+ 	case CPU_ICX:
+ 	case CPU_SPR:
+ 	case CPU_EMR:
++	case CPU_GNR:
+ 	case CPU_ZEN:
+ 	case CPU_ZEN3:
+ 	case CPU_ZEN4:
+-- 
+2.41.0
+

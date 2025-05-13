@@ -1,0 +1,32 @@
+From b2206e7780e7074e811ca1159753b0ccfa68cbc5 Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Tue, 6 Aug 2024 16:37:54 +0100
+Subject: [PATCH 28/32] common: fix timeout option, break out of loop
+
+Currently the timeout -t option does not work, the code display
+loop continues forever when the timeout occurs. Fix this by
+replacing the continue statement with a break to exit the loop.
+
+Fixes: https://github.com/intel/numatop/issues/27
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/disp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/disp.c b/common/disp.c
+index bb0bba2..ea865c3 100644
+--- a/common/disp.c
++++ b/common/disp.c
+@@ -514,7 +514,7 @@ disp_handler(void *arg __attribute__((unused)))
+ 			g_run_secs = TIME_NSEC_MAX;
+ 			debug_print(NULL, 2,
+ 			    "disp: it's time to exit\n");
+-			continue;
++			break;
+ 		}
+ 
+ 		if ((status == ETIMEDOUT) && (flag == DISP_FLAG_NONE)) {
+-- 
+2.41.0
+

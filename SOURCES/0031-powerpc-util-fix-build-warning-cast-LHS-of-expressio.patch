@@ -1,0 +1,34 @@
+From 9c4d14a9c553840022ecb2333b87643370b333d8 Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Tue, 13 Aug 2024 14:17:32 +0100
+Subject: [PATCH 31/32] powerpc/util: fix build warning, cast LHS of expression
+ to size_t
+
+The powerpc builds are throwing a warning, fix this with a cast.
+
+Fixes warning:
+powerpc/util.c:91:34: warning: comparison of integer expressions of different
+signedness: 'long int' and 'size_t' {aka 'long unsigned int'} [-Wsign-compare]
+   91 |                 if (c - line + 2 < len && ...
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ powerpc/util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/powerpc/util.c b/powerpc/util.c
+index f2ff159..6e1fe9d 100644
+--- a/powerpc/util.c
++++ b/powerpc/util.c
+@@ -88,7 +88,7 @@ arch__cpuinfo_freq(double *freq, char *unit)
+ 		}
+ 
+ 		c = strchr(line, ':');
+-		if (c - line + 2 < len &&
++		if ((size_t)(c - line + 2) < len &&
+ 		    !strncmp(c + 2, "pSeries", sizeof ("pSeries") - 1)) {
+ 			ret = 0;
+ 			break;
+-- 
+2.41.0
+

@@ -1,0 +1,251 @@
+From 38fafde94d30242b6725f7f50ef92bc85a39f6f5 Mon Sep 17 00:00:00 2001
+From: Dapeng Mi <dapeng1.mi@linux.intel.com>
+Date: Tue, 15 Oct 2024 12:56:10 +0000
+Subject: [PATCH 3/3] Support Intel Sierra Forest platform
+
+Add support for Intel Sierra Forest platform. SRF is the 1st generation
+XEON server with pure E-cores. Since E-core's events are different with
+P-cores, so create separate srf.h/c files to implement these E-core
+specific data structures and helpers.
+
+Signed-off-by: Dapeng Mi <dapeng1.mi@linux.intel.com>
+---
+ Makefile.am         |  2 ++
+ x86/include/srf.h   | 50 ++++++++++++++++++++++++++++++++
+ x86/include/types.h |  3 +-
+ x86/plat.c          |  8 ++++++
+ x86/srf.c           | 70 +++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 132 insertions(+), 1 deletion(-)
+ create mode 100644 x86/include/srf.h
+ create mode 100644 x86/srf.c
+
+diff --git a/Makefile.am b/Makefile.am
+index f23e1a6..a6ef1de 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -64,6 +64,7 @@ libnumatop_la_SOURCES += \
+ 	x86/include/nhm.h \
+ 	x86/include/skl.h \
+ 	x86/include/snb.h \
++	x86/include/srf.h \
+ 	x86/include/types.h \
+ 	x86/include/util.h \
+ 	x86/include/wsm.h \
+@@ -73,6 +74,7 @@ libnumatop_la_SOURCES += \
+ 	x86/plat.c \
+ 	x86/skl.c \
+ 	x86/snb.c \
++	x86/srf.c \
+ 	x86/ui_perf_map.c \
+ 	x86/util.c \
+ 	x86/wsm.c \
+diff --git a/x86/include/srf.h b/x86/include/srf.h
+new file mode 100644
+index 0000000..8bb0f44
+--- /dev/null
++++ b/x86/include/srf.h
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (c) 2024, Intel Corporation
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *
++ *   * Redistributions of source code must retain the above copyright notice,
++ *     this list of conditions and the following disclaimer.
++ *   * Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ *   * Neither the name of Intel Corporation nor the names of its contributors
++ *     may be used to endorse or promote products derived from this software
++ *     without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef _NUMATOP_INTEL_SRF_H
++#define _NUMATOP_INTEL_SRF_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <sys/types.h>
++#include <inttypes.h>
++#include "../../common/include/types.h"
++
++struct _plat_event_config;
++
++extern void srf_profiling_config(perf_count_id_t, struct _plat_event_config *);
++extern void srf_ll_config(struct _plat_event_config *);
++extern int srf_offcore_num(void);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* _NUMATOP_INTEL_SRF_H */
+\ No newline at end of file
+diff --git a/x86/include/types.h b/x86/include/types.h
+index 814ef1c..4e3bea1 100644
+--- a/x86/include/types.h
++++ b/x86/include/types.h
+@@ -49,12 +49,13 @@ typedef enum {
+ 	CPU_SPR,
+ 	CPU_EMR,
+ 	CPU_GNR,
++	CPU_SRF,
+ 	CPU_ZEN,
+ 	CPU_ZEN3,
+ 	CPU_ZEN4
+ } cpu_type_t;
+ 
+-#define	CPU_TYPE_NUM	17
++#define	CPU_TYPE_NUM	18
+ 
+ typedef enum {
+ 	PERF_COUNT_INVALID = -1,
+diff --git a/x86/plat.c b/x86/plat.c
+index 0eea408..557a8c9 100644
+--- a/x86/plat.c
++++ b/x86/plat.c
+@@ -36,6 +36,7 @@
+ #include "include/snb.h"
+ #include "include/bdw.h"
+ #include "include/skl.h"
++#include "include/srf.h"
+ #include "include/zen.h"
+ 
+ pfn_plat_profiling_config_t
+@@ -54,6 +55,7 @@ s_plat_profiling_config[CPU_TYPE_NUM] = {
+ 	spr_profiling_config,
+ 	spr_profiling_config,	/* EMR */
+ 	spr_profiling_config,	/* GNR */
++	srf_profiling_config,
+ 	zen_profiling_config,
+ 	zen3_profiling_config,
+ 	zen4_profiling_config
+@@ -75,6 +77,7 @@ s_plat_ll_config[CPU_TYPE_NUM] = {
+ 	spr_ll_config,
+ 	spr_ll_config,		/* EMR */
+ 	spr_ll_config,		/* GNR */
++	srf_ll_config,
+ 	zen_ll_config,
+ 	zen_ll_config,
+ 	zen_ll_config
+@@ -96,6 +99,7 @@ s_plat_offcore_num[CPU_TYPE_NUM] = {
+ 	spr_offcore_num,
+ 	spr_offcore_num,	/* EMR */
+ 	spr_offcore_num,	/* GNR */
++	srf_offcore_num,
+ 	zen_offcore_num,
+ 	zen_offcore_num,
+ 	zen_offcore_num
+@@ -205,6 +209,9 @@ cpu_type_get(void)
+ 		case 173:
+ 			type = CPU_GNR;
+ 			break;
++		case 175:
++			type = CPU_SRF;
++			break;
+ 		}
+ 	} else if (family == 23) {	/* Family 17h */
+ 		type = CPU_ZEN;
+@@ -259,6 +266,7 @@ plat_detect(void)
+ 	case CPU_SPR:
+ 	case CPU_EMR:
+ 	case CPU_GNR:
++	case CPU_SRF:
+ 	case CPU_ZEN:
+ 	case CPU_ZEN3:
+ 	case CPU_ZEN4:
+diff --git a/x86/srf.c b/x86/srf.c
+new file mode 100644
+index 0000000..790432e
+--- /dev/null
++++ b/x86/srf.c
+@@ -0,0 +1,70 @@
++/*
++ * Copyright (c) 2024, Intel Corporation
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *
++ *   * Redistributions of source code must retain the above copyright notice,
++ *     this list of conditions and the following disclaimer.
++ *   * Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ *   * Neither the name of Intel Corporation nor the names of its contributors
++ *     may be used to endorse or promote products derived from this software
++ *     without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++/* This file contains the bdw platform specific functions. */
++
++#include <inttypes.h>
++#include <stdlib.h>
++#include <sys/types.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <string.h>
++#include <strings.h>
++#include "../common/include/os/linux/perf_event.h"
++#include "../common/include/os/plat.h"
++#include "include/srf.h"
++
++static plat_event_config_t s_srf_config[PERF_COUNT_NUM] = {
++	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES, 0x53, 0, 0, 0, "cpu_clk_unhalted.core" },
++	{ PERF_TYPE_RAW, 0x01B7, 0x53, 0x730000001, 0, 0, "off_core_response_0" },
++	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_REF_CPU_CYCLES, 0x53, 0, 0, 0, "cpu_clk_unhalted.ref" },
++	{ PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, 0x53, 0, 0, 0, "instr_retired.any" },
++	{ PERF_TYPE_RAW, 0x02B7, 0x53, 0x184000001, 0, 0, "off_core_response_1" }
++};
++
++static plat_event_config_t s_srf_ll = {
++	PERF_TYPE_RAW, 0x05D0, 0x53, LL_THRESH, 0, 1, "mem_trans_retired.latency_above_threshold"
++};
++
++void
++srf_profiling_config(perf_count_id_t perf_count_id, plat_event_config_t *cfg)
++{
++	plat_config_get(perf_count_id, cfg, s_srf_config);
++}
++
++void
++srf_ll_config(plat_event_config_t *cfg)
++{
++	memcpy(cfg, &s_srf_ll, sizeof (plat_event_config_t));
++}
++
++int
++srf_offcore_num(void)
++{
++	return (2);
++}
+\ No newline at end of file
+-- 
+2.41.0
+

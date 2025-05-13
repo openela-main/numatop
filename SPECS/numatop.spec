@@ -3,12 +3,51 @@
 
 Name:           numatop
 Version:        2.4
-Release:        1%{?dist}
+Release:        6%{?dist}
 Summary:        Memory access locality characterization and analysis
 
 License:        BSD
 URL:            https://01.org/numatop
 Source:         https://github.com/intel/numatop/archive/refs/tags/v%{version}.tar.gz
+# Patch0:         format.patch
+Patch01:	0001-common-reg.c-use-explicit-format-string.patch
+Patch02:	0002-numatop-powerpc-Add-Power11-support.patch
+Patch03:	0003-add-required-SECURITY.md-file-for-OSSF-Scorecard-com.patch
+Patch04:	0004-x86-zen-Add-Zen-5-and-later-support.patch
+Patch05:	0005-readme-Add-note-on-AMD-support.patch
+Patch06:	0006-Fix-several-printf-format-specifiers.patch
+Patch07:	0007-Clean-up-32-bit-build-warnings.patch
+Patch08:	0008-common-os-os_win.c-Fix-incorrect-usage-of-strncat.patch
+Patch09:	0009-common-os-os_util.c-Fix-off-by-one-on-string-length-.patch
+#Patch10:	0010-common-reg-Add-pragmas-to-silence-false-positive-war.patch
+Patch11:	0011-x86-Fix-missing-fields-for-EMR-support.patch
+Patch12:	0012-common-Use-sym_type_t-in-elf64_binary_read-signature.patch
+Patch13:	0013-common-Remove-unnecessary-temp-buffer.patch
+Patch14:	0014-common-Use-memcpy-to-the-process-name-to-a-line.patch
+Patch15:	0015-common-Increase-node-string-buffer-size.patch
+Patch16:	0016-Fix-remaining-clang-warnings.patch
+#Patch17:	0017-Revert-common-reg-Add-pragmas-to-silence-false-posit.patch
+Patch18:	0018-common-Replace-malloc-strncpy-with-strdup.patch
+Patch19:	0019-common-Build-node-string-with-bound-checks.patch
+Patch20:	0020-Add-missing-hunks-from-last-change.patch
+Patch21:	0021-common-remove-extra-d-from-debug_print-and-fix-gramm.patch
+Patch22:	0022-common-fix-uninitialized-string-content-in-dyn-pid-0.patch
+Patch23:	0023-common-Add-missing-t-from-help-and-manual.patch
+Patch24:	0024-common-perform-sanity-check-on-num-to-avoid-array-bo.patch
+Patch25:	0025-common-ensure-the-dump-and-log-files-are-not-opened-.patch
+Patch26:	0026-common-cast-difference-of-data_head-and-data_tail-to.patch
+Patch27:	0027-common-resolve_unique-Fix-uninitialised-return-of-po.patch
+Patch28:	0028-common-fix-timeout-option-break-out-of-loop.patch
+Patch29:	0029-common-use-mount-umount-system-calls-rather-than-usi.patch
+Patch30:	0030-common-remove-executing-commands-for-directory-and-f.patch
+Patch31:	0031-powerpc-util-fix-build-warning-cast-LHS-of-expressio.patch
+Patch32:	0032-common-os-map-Fix-overflow-warning.patch
+Patch33:	0033-Move-all-curses-calls-into-display-threads.patch
+Patch34:	0034-Avoid-race-on-submitting-display-commands.patch
+Patch35:	0035-Remove-EMR-specific-events-configuration.patch
+Patch36:	0036-Support-Intel-Granite-Rapids-platform.patch
+Patch37:	0037-Support-Intel-Sierra-Forest-platform.patch
+
 
 
 BuildRequires:  autoconf
@@ -62,6 +101,12 @@ autoreconf --force --install --symlink
 
 
 %changelog
+* Thu Jan  2 2025 Pingfan Liu <piliu@redhat.com> - 2.4.6
+- Add support for intel  GNR and SRF
+
+* Thu Jan  2 2025 Pingfan Liu <piliu@redhat.com> - 2.4.5
+- Fix ncures race issue
+
 * Thu Feb  1 2024 Pingfan Liu <piliu@redhat.com> - 2.4.1
 - Add initial support for EMR
 

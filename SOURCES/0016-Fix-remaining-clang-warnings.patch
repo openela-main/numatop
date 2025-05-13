@@ -1,0 +1,50 @@
+From 75e1f8a0cc7531f5d6e38f083d427114025b7c84 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Wed, 31 Jul 2024 08:52:46 -0700
+Subject: [PATCH 16/32] Fix remaining clang warnings
+
+Increase mapfile buffer size.
+Avoid some warnings for pointer truncation.
+---
+ common/os/map.c     | 2 +-
+ common/os/os_perf.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/common/os/map.c b/common/os/map.c
+index 83fdb88..39251a8 100644
+--- a/common/os/map.c
++++ b/common/os/map.c
+@@ -144,7 +144,7 @@ map_read(pid_t pid, map_proc_t *map)
+ 	char path[PATH_MAX];
+ 	char line[MAPFILE_LINE_SIZE];
+ 	char addr_str[128], attr_str[128], off_str[128];
+-	char fd_str[128], inode_str[128], path_str[PATH_MAX];
++	char fd_str[128], inode_str[128], path_str[PATH_MAX*2];
+ 	char s1[64], s2[64];
+ 	uint64_t start_addr, end_addr;
+ 	unsigned int attr;
+diff --git a/common/os/os_perf.c b/common/os/os_perf.c
+index 49fdaaa..5a992e4 100644
+--- a/common/os/os_perf.c
++++ b/common/os/os_perf.c
+@@ -292,7 +292,7 @@ cpu_profiling_setupstart(perf_cpu_t *cpu,
+ static int
+ cpu_profiling_partpause(perf_cpu_t *cpu, void *arg)
+ {
+-	perf_count_id_t perf_count_id = (perf_count_id_t)arg;
++  	perf_count_id_t perf_count_id = (perf_count_id_t)(uintptr_t)arg;
+ 	int i;
+ 
+ 	if (perf_count_id == PERF_COUNT_INVALID ||
+@@ -345,7 +345,7 @@ cpu_profiling_multipause(perf_cpu_t *cpu, void *arg)
+ static int
+ cpu_profiling_restore(perf_cpu_t *cpu, void *arg)
+ {
+-	perf_count_id_t perf_count_id = (perf_count_id_t)arg;
++  	perf_count_id_t perf_count_id = (perf_count_id_t)(uintptr_t)arg;
+ 	int i;
+ 
+ 	if (perf_count_id == PERF_COUNT_INVALID ||
+-- 
+2.41.0
+
