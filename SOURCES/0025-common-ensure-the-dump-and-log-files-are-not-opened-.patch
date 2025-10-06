@@ -1,0 +1,46 @@
+From 4cc28a70d711c5e543648c671faf7731af55ddbe Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Tue, 6 Aug 2024 11:26:03 +0100
+Subject: [PATCH 25/32] common: ensure the dump and log files are not opened
+ multiple times
+
+Currently one can pass the -d and -f options multiple times and this
+leads to the dump and log files being opened more than once. Check
+for these files being re-opened again to avoid this.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/numatop.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/common/numatop.c b/common/numatop.c
+index d66e64b..122c187 100644
+--- a/common/numatop.c
++++ b/common/numatop.c
+@@ -103,6 +103,11 @@ main(int argc, char *argv[])
+ 				goto L_EXIT0;
+ 			}
+ 
++			if (log != NULL) {
++				stderr_print("Invalid multiple use of -f option.\n");
++				goto L_EXIT0;
++			}
++
+ 			if ((log = fopen(optarg, "w")) == NULL) {
+ 				stderr_print("Cannot open '%s' for writing.\n",
+ 				    optarg);
+@@ -142,6 +147,11 @@ main(int argc, char *argv[])
+ 				goto L_EXIT0;
+ 			}
+ 
++			if (dump != NULL) {
++				stderr_print("Invalid multiple use of -d option.\n");
++				goto L_EXIT0;
++			}
++
+ 			if ((dump = fopen(optarg, "w")) == NULL) {
+ 				stderr_print("Cannot open '%s' for dump.\n",
+ 				    optarg);
+-- 
+2.41.0
+

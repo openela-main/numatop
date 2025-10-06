@@ -1,0 +1,32 @@
+From d52038ca7af3198dc8797841f2b25f2cd862f5df Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Thu, 1 Aug 2024 09:45:32 +0100
+Subject: [PATCH 22/32] common: fix uninitialized string content in dyn->pid ==
+ 0 case
+
+In the case where dyn->pid is zero the string content is not initialized
+and subsequent writing of this string will emit unintialized garbage and
+potentially leaking data on the stack and/or buffer overflow. Fix this
+by making it an empty string.
+
+Fixes: 232711080396 ("Add cache monitoring and memory bandwidth monitoring features")
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/win.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/common/win.c b/common/win.c
+index 39909bc..c3e8492 100644
+--- a/common/win.c
++++ b/common/win.c
+@@ -3324,6 +3324,7 @@ pqos_mbm_data_show(dyn_win_t *win, boolean_t *note_out)
+ 
+ 	if (dyn->pid == 0) {
+ 		/* TODO */
++		*content = '\0';
+ 	} else if (dyn->lwpid == 0) {
+ 		nprocs = 1;
+ 		data_reg->nlines_total = 1;
+-- 
+2.41.0
+

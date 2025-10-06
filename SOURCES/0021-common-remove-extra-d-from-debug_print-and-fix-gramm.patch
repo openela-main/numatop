@@ -1,0 +1,32 @@
+From 41db077a4c36e6f28ea55c5df7d6f34c886d5a0a Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Thu, 1 Aug 2024 09:41:27 +0100
+Subject: [PATCH 21/32] common: remove extra %d from debug_print and fix
+ grammar
+
+The debug_print print formats two integers using %d/%d but only
+one integer is being passed as an argument. Remove the send %d.
+Also fix grammar in the debug message.
+
+Fixes: 8a4a6c57a74d ("Add a feature to show per-Node QPI bandwidth")
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/os/os_perf.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/os/os_perf.c b/common/os/os_perf.c
+index 5a992e4..d8d634f 100644
+--- a/common/os/os_perf.c
++++ b/common/os/os_perf.c
+@@ -1510,7 +1510,7 @@ os_uncore_start(perf_ctl_t *ctl, perf_task_t *task)
+ 
+ 	if (uncore_start(ctl, t->nid) != 0) {
+ 		debug_print(NULL, 2,
+-			"os_uncore_start is failed for node %d/%d\n",
++			"os_uncore_start failed for node %d\n",
+ 			t->nid);
+ 		perf_status_set(PERF_STATUS_UNCORE_FAILED);
+ 		return (-1);
+-- 
+2.41.0
+

@@ -1,0 +1,39 @@
+From 020fe25d0fa7446ebcd7925caeae914ba4481f3e Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Tue, 6 Aug 2024 11:35:23 +0100
+Subject: [PATCH 26/32] common: cast difference of data_head and data_tail to
+ int64_t rather than int
+
+Don't assume int is the same size as the uint64_t data_head and data_tail
+sizes. Use int64_t and remove the redundant use of variable data_size.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/os/pfwrapper.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/common/os/pfwrapper.c b/common/os/pfwrapper.c
+index 943820e..10042d9 100644
+--- a/common/os/pfwrapper.c
++++ b/common/os/pfwrapper.c
+@@ -58,7 +58,7 @@ mmap_buffer_read(struct perf_event_mmap_page *header, void *buf, size_t size)
+ {
+ 	void *data;
+ 	uint64_t data_head, data_tail;
+-	int data_size, ncopies;
++	int ncopies;
+ 	
+ 	/*
+ 	 * The first page is a meta-data page (struct perf_event_mmap_page),
+@@ -79,7 +79,7 @@ mmap_buffer_read(struct perf_event_mmap_page *header, void *buf, size_t size)
+ 	 * The kernel function "perf_output_space()" guarantees no data_head can
+ 	 * wrap over the data_tail.
+ 	 */
+-	if ((data_size = data_head - data_tail) < (int)size) {
++	if ((int64_t)(data_head - data_tail) < (int64_t)size) {
+ 		return (-1);
+ 	}
+ 
+-- 
+2.41.0
+

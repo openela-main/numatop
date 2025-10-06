@@ -1,0 +1,43 @@
+From 1057faab896911fb2d3b5cd98bec15cecbdcc00e Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Mon, 5 Aug 2024 17:33:36 +0100
+Subject: [PATCH 24/32] common: perform sanity check on num to avoid array
+ bounds underflow/overflow
+
+The integer num is being read from a file and potentially could have values
+outside of the range of the arrays it is used to index into. To avoid any
+potential array index underflow or overflow accesses perform some sanity
+checking.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/os/node.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/common/os/node.c b/common/os/node.c
+index 5df1d89..f384e3b 100644
+--- a/common/os/node.c
++++ b/common/os/node.c
+@@ -167,6 +167,9 @@ cpu_refresh(boolean_t init)
+ 			if (!os_sysfs_cpu_enum(node->nid, cpu_arr, NCPUS_NODE_MAX, &num)) {
+ 				return (-1);
+ 			}
++			if (num < 0 || num >= NCPUS_NODE_MAX) {
++				return (-1);
++			}
+ 
+ 			if (os_perf_cpuarr_refresh(node->cpus, NCPUS_NODE_MAX, cpu_arr,
+ 				num, init) != 0) {
+@@ -225,6 +228,9 @@ node_group_refresh(boolean_t init)
+ 	if (!os_sysfs_node_enum(node_arr, NNODES_MAX, &num)) {
+ 		goto L_EXIT;
+ 	}
++	if (num < 0 || num >= NNODES_MAX) {
++		goto L_EXIT;
++	}
+ 
+ 	for (i = 0; i < NNODES_MAX; i++) {
+ 		node = node_get(i);
+-- 
+2.41.0
+

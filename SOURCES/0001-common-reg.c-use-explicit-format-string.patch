@@ -1,0 +1,34 @@
+From 635e2ce2ccb1ac793cc276a7fcb8a92b1ffefa5d Mon Sep 17 00:00:00 2001
+From: Will Dietz <w@wdtz.org>
+Date: Mon, 31 Jan 2022 12:43:19 -0600
+Subject: [PATCH 01/32] common/reg.c: use explicit format string
+
+---
+ common/reg.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/common/reg.c b/common/reg.c
+index 1a87161..ad37274 100644
+--- a/common/reg.c
++++ b/common/reg.c
+@@ -240,7 +240,7 @@ reg_line_write(win_reg_t *r, int line, reg_align_t align, char *content)
+ 	}
+ 
+ 	if (len > 0) {
+-		(void) mvwprintw(r->hdl, line, pos_x, content);
++		(void) mvwprintw(r->hdl, line, pos_x, "%s", content);
+ 	}
+ 
+ 	if (r->mode != 0) {
+@@ -267,7 +267,7 @@ reg_highlight_write(win_reg_t *r, int line, int align, char *content)
+ 	}
+ 
+ 	if (len > 0) {
+-		(void) mvwprintw(r->hdl, line, pos_x, content);
++		(void) mvwprintw(r->hdl, line, pos_x, "%s", content);
+ 	}
+ 
+ 	(void) wattroff(r->hdl, A_REVERSE | A_BOLD);
+-- 
+2.41.0
+

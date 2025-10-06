@@ -1,0 +1,39 @@
+From 33c2cc629c248c2684069e077c9b9f10b22170d8 Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Wed, 1 Dec 2021 13:58:10 +0000
+Subject: [PATCH 09/32] common/os/os_util.c: Fix off-by-one on string length in
+ strncpy call
+
+The strncpy will miss adding the terminating '\0' to the string because
+of an off-by-one issue. Most of the time we are lucky this works because
+the malloc'd data is zero, but we can't assume this.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/os/os_util.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/common/os/os_util.c b/common/os/os_util.c
+index f442729..53bf405 100644
+--- a/common/os/os_util.c
++++ b/common/os/os_util.c
+@@ -391,7 +391,7 @@ str_int_extract(char *str, int *arr, int arr_size, int *num)
+ 		return (B_FALSE);
+ 	}
+ 
+-	strncpy(scopy, str, len);
++	strncpy(scopy, str, len + 1);
+ 	scopy[len] = 0;
+ 	cur = scopy;
+ 
+@@ -447,7 +447,6 @@ file_int_extract(char *path, int *arr, int arr_size, int *num)
+ 		fclose(fp);
+ 		return (B_FALSE);
+ 	}
+-
+ 	fclose(fp);
+ 	return (str_int_extract(buf, arr, arr_size, num));
+ }
+-- 
+2.41.0
+

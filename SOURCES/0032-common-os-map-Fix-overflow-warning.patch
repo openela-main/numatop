@@ -1,0 +1,36 @@
+From 7dd67b56333bae4a40d825600c3b7cc7df08068d Mon Sep 17 00:00:00 2001
+From: Pingfan Liu <piliu@redhat.com>
+Date: Mon, 17 Jun 2024 12:36:39 +0800
+Subject: [PATCH 32/32] common/os: map: Fix overflow warning
+
+As we have
+common/include/types.h:79:#ifndef PATH_MAX
+common/include/types.h:80:#define       PATH_MAX        2048
+
+The following code has potential issue with overflow:
+	if ((nargs = sscanf(line, "%127[^ ] %127[^ ] %127[^ ] %127[^ ] %127[^ ] %4095[^\n]",
+		addr_str, attr_str, off_str, fd_str, inode_str, path_str)) < 0) {
+
+Where the capacity of path_str is 2048 instead of 4096.
+
+Signed-off-by: Pingfan Liu <piliu@redhat.com>
+---
+ common/os/map.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common/os/map.c b/common/os/map.c
+index 39251a8..29c5a78 100644
+--- a/common/os/map.c
++++ b/common/os/map.c
+@@ -165,7 +165,7 @@ map_read(pid_t pid, map_proc_t *map)
+ 		/* 
+ 		 * e.g. 00400000-00405000 r-xp 00000000 fd:00 678793	/usr/bin/vmstat
+ 		 */
+-		if ((nargs = sscanf(line, "%127[^ ] %127[^ ] %127[^ ] %127[^ ] %127[^ ] %4095[^\n]",
++		if ((nargs = sscanf(line, "%127[^ ] %127[^ ] %127[^ ] %127[^ ] %127[^ ] %2047[^\n]",
+ 		    addr_str, attr_str, off_str, fd_str, inode_str, path_str)) < 0) {
+ 		    goto L_EXIT;
+ 		}
+-- 
+2.41.0
+

@@ -1,0 +1,114 @@
+From 3cf69e26e6ffa1a09148da8be0e211dcc699af3c Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Mon, 13 Jan 2020 17:07:04 +0000
+Subject: [PATCH 07/32] Clean up 32 bit build warnings
+
+The casting of uint64_t sized address values to void * pointers is
+causing build warnings on 32 bit builds.  A simple remedy is to
+cast uint64_t values to uintptr_t types before casting them to void *
+pointers.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ common/os/map.c    | 8 ++++----
+ common/os/os_win.c | 6 +++---
+ common/proc.c      | 3 ++-
+ common/win.c       | 2 +-
+ 4 files changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/common/os/map.c b/common/os/map.c
+index 2650864..83fdb88 100644
+--- a/common/os/map.c
++++ b/common/os/map.c
+@@ -322,7 +322,7 @@ numa_map_update(numa_map_t *numa_map, void **addr_arr, int *node_arr,
+ 	int i = 0, j;
+ 
+ 	if ((entry = last_entry) == NULL) {
+-		if ((entry = numa_entry_add(numa_map, (uint64_t)(addr_arr[i]), 
++		if ((entry = numa_entry_add(numa_map, (uint64_t)(uintptr_t)addr_arr[i],
+ 			node_arr[i])) == NULL) {
+ 			return (NULL);
+ 		}
+@@ -332,10 +332,10 @@ numa_map_update(numa_map_t *numa_map, void **addr_arr, int *node_arr,
+ 
+ 	for (j = i; j < addr_num; j++) {
+ 		if ((entry->nid == node_arr[j]) &&
+-			(entry->end_addr == (uint64_t)(addr_arr[j]))) {
++			(entry->end_addr == (uint64_t)(uintptr_t)addr_arr[j])) {
+ 			entry->end_addr += g_pagesize;
+ 		} else {
+-			if ((entry = numa_entry_add(numa_map, (uint64_t)(addr_arr[j]), 
++			if ((entry = numa_entry_add(numa_map, (uint64_t)(uintptr_t)addr_arr[j],
+ 				node_arr[j])) == NULL) {
+ 				return (NULL);
+ 			}		
+@@ -359,7 +359,7 @@ map_map2numa(track_proc_t *proc, map_entry_t *map_entry)
+ 	while (npages_moved < npages_total) {
+ 		npages_tomove = MIN(NUMA_MOVE_NPAGES, npages_total - npages_moved);
+ 		for (i = 0; i < npages_tomove; i++) {
+-			addr_arr[i] = (void *)(map_entry->start_addr + 
++			addr_arr[i] = (void *)(uintptr_t)(map_entry->start_addr +
+ 				(i + npages_moved) * g_pagesize);
+ 		}
+ 
+diff --git a/common/os/os_win.c b/common/os/os_win.c
+index de198ca..09d2ed0 100644
+--- a/common/os/os_win.c
++++ b/common/os/os_win.c
+@@ -561,7 +561,7 @@ os_llcallchain_win_destroy(dyn_win_t *win)
+ static int
+ bufaddr_cmp(const void *p1, const void *p2)
+ {
+-	const uint64_t addr = (const uint64_t)p1;
++	const uint64_t addr = (const uint64_t)(uintptr_t)p1;
+ 	const bufaddr_t *bufaddr = (const bufaddr_t *)p2;
+ 
+ 	if (addr < bufaddr->addr) {
+@@ -621,7 +621,7 @@ llcallchain_bufinfo_show(dyn_llcallchain_t *dyn, track_proc_t *proc,
+ 	 * Check if the linear address is located in a buffer in
+ 	 * process address space.
+ 	 */ 
+-	if ((line = bsearch((void *)(dyn->addr), lat_buf, nlines,
++	if ((line = bsearch((void *)(uintptr_t)(dyn->addr), lat_buf, nlines,
+ 		sizeof (lat_line_t), bufaddr_cmp)) != NULL) {
+ 		win_lat_str_build(content, WIN_LINECHAR_MAX, 0, line);
+ 		reg_line_write(reg, 0, ALIGN_LEFT, content);
+@@ -791,7 +791,7 @@ os_lat_buf_hit(lat_line_t *lat_buf, int nlines, os_perf_llrec_t *rec,
+ 	 * Check if the linear address is located in a buffer in
+ 	 * process address space.
+ 	 */
+-	if ((line = bsearch((void *)(rec->addr), lat_buf, nlines,
++	if ((line = bsearch((void *)(uintptr_t)(rec->addr), lat_buf, nlines,
+ 	    sizeof (lat_line_t), bufaddr_cmp)) != NULL) {
+ 		/*
+ 		 * If the linear address is located in, that means this
+diff --git a/common/proc.c b/common/proc.c
+index db450ed..9954eb6 100644
+--- a/common/proc.c
++++ b/common/proc.c
+@@ -746,7 +746,8 @@ proc_group_refresh(pid_t *procs_new, int nproc_new)
+ 				proc_group_remove(proc);
+ 				proc_free(proc);
+ 			} else {
+-				j = ((uint64_t)p - (uint64_t)procs_new) /
++				j = ((uint64_t)(uintptr_t)p -
++				     (uint64_t)(uintptr_t)procs_new) /
+ 				    sizeof (pid_t);
+ 				exist_arr[j] = B_TRUE;
+ 			}
+diff --git a/common/win.c b/common/win.c
+index d0a8f3b..910d267 100644
+--- a/common/win.c
++++ b/common/win.c
+@@ -2668,7 +2668,7 @@ llrec2addr(track_proc_t *proc, track_lwp_t *lwp, void ***addr_arr,
+ 	}
+ 
+ 	for (i = 0; i < grp->nrec_cur; i++) {
+-		addr_buf[i] = (void *)(grp->rec_arr[i].addr);
++		addr_buf[i] = (void *)(uintptr_t)(grp->rec_arr[i].addr);
+ 		lat_buf[i] = grp->rec_arr[i].latency;
+ 	}
+ 
+-- 
+2.41.0
+
