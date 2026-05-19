@@ -1,7 +1,7 @@
 From eb42e7eb07892e91939e3875a124d5f485697ae9 Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Mon, 18 Nov 2024 08:04:04 -0800
-Subject: [PATCH] Move all curses calls into display threads
+Subject: [PATCH 1/5] Move all curses calls into display threads
 
 Curses is not thread safe, but currently both the cons and the disp
 thread can issue curses calls concurrently.
@@ -256,5 +256,5 @@ index f9d28de..f934406 100644
  
  typedef struct _disp_ctl {
 -- 
-2.41.0
+2.49.0
 

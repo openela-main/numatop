@@ -3,10 +3,10 @@
 
 Name:           numatop
 Version:        2.4
-Release:        6%{?dist}
+Release:        9%{?dist}
 Summary:        Memory access locality characterization and analysis
 
-License:        BSD
+License:        BSD-3-Clause
 URL:            https://01.org/numatop
 Source:         https://github.com/intel/numatop/archive/refs/tags/v%{version}.tar.gz
 # Patch0:         format.patch
@@ -42,12 +42,20 @@ Patch29:	0029-common-use-mount-umount-system-calls-rather-than-usi.patch
 Patch30:	0030-common-remove-executing-commands-for-directory-and-f.patch
 Patch31:	0031-powerpc-util-fix-build-warning-cast-LHS-of-expressio.patch
 Patch32:	0032-common-os-map-Fix-overflow-warning.patch
-Patch33:	0033-Move-all-curses-calls-into-display-threads.patch
-Patch34:	0034-Avoid-race-on-submitting-display-commands.patch
 Patch35:	0035-Remove-EMR-specific-events-configuration.patch
 Patch36:	0036-Support-Intel-Granite-Rapids-platform.patch
 Patch37:	0037-Support-Intel-Sierra-Forest-platform.patch
-
+Patch38:	0038-Move-all-curses-calls-into-display-threads.patch
+Patch39:	0039-Avoid-race-on-submitting-display-commands.patch
+Patch40:	0040-Increase-PID-column-width.patch
+Patch41:	0041-common-Ignore-samples-for-exiting-tasks.patch
+Patch42:	0042-common-Fix-upper-bound-for-nodes.patch
+Patch43:	0043-common-Fix-upper-bound-for-CPUs-per-node.patch
+Patch44:	0044-common-Resolve-max-count-of-nodes-at-runtime.patch
+Patch45:	0045-common-Resolve-max-count-of-CPUs-at-runtime.patch
+Patch46:	0046-common-Resolve-max-count-of-CPUs-per-node-at-runtime.patch
+Patch47:	0047-common-Remove-unused-NPROCS_NAX.patch
+Patch48:	0048-Avoid-deadlock-on-quitting.patch
 
 
 BuildRequires:  autoconf

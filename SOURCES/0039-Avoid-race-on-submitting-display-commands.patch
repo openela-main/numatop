@@ -1,7 +1,7 @@
 From 8dfa30ea03111981ce5cbc793960688d93f17b68 Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Tue, 19 Nov 2024 11:02:35 -0800
-Subject: [PATCH] Avoid race on submitting display commands
+Subject: [PATCH 3/5] Avoid race on submitting display commands
 
 Doesn't work for quitting, but we can ignore it here.
 ---
@@ -28,5 +28,5 @@ index 78bf9e9..c542b77 100644
  	(void) pthread_cond_signal(&s_disp_ctl.cond);
  }
 -- 
-2.41.0
+2.49.0
 

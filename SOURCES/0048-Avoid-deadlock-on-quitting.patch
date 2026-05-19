@@ -1,0 +1,29 @@
+From 1550c9925f98754c7af99d01df460eb6dabb4b0e Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Tue, 2 Dec 2025 22:06:32 -0800
+Subject: [PATCH] Avoid deadlock on quitting
+
+by resetting the display command mailbox when the display thread exits.
+
+Originally introduced with 8dfa30ea0311
+
+Fixes #98
+---
+ common/disp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/common/disp.c b/common/disp.c
+index c542b77..75eda9d 100644
+--- a/common/disp.c
++++ b/common/disp.c
+@@ -640,6 +640,7 @@ L_EXIT:
+ 	perf_fini();
+ 
+ 	debug_print(NULL, 2, "disp thread is exiting\n");
++	s_disp_ctl.flag = DISP_FLAG_NONE;
+ 	return (NULL);
+ }
+ 
+-- 
+2.49.0
+
